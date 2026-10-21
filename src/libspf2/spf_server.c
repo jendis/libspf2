@@ -489,9 +489,12 @@ retry:
 	SPF_dns_rr_free(rr_txt);
 
 	/* FIXME: support multiple versions */
-	if (err != SPF_E_SUCCESS)
+	if (err != SPF_E_SUCCESS) {
+		spf_response->result = SPF_RESULT_PERMERROR;
+		spf_response->reason = SPF_REASON_FAILURE;
 		return SPF_response_add_error(spf_response, SPF_E_NOT_SPF,
 				"Failed to compile SPF record for '%s'", domain);
+	}
 
 	return SPF_E_SUCCESS;
 }

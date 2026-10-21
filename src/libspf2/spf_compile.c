@@ -60,6 +60,8 @@ enum SPF_domspec_enum {
  *	 SPF_MAX_MECH_LEN + SPF_MAX_STR_LEN
  */
 #define SPF_RECORD_BUFSIZ	  4096
+#define SPF_MAX_NUM_MECH	  255
+#define SPF_MAX_NUM_MOD	  255
 
 #define ALIGN_DECL(decl) union { double d; long l; decl } __attribute__((aligned(_ALIGN_SZ))) u
 #define ALIGNED_DECL(var) u.var
@@ -856,8 +858,11 @@ ALIGN_DECL(
 
 	len = sizeof( SPF_mech_t );
 
-	if ( spf_record->mech_len + len > SPF_MAX_MECH_LEN )
-		return SPF_E_BIG_MECH;
+	if ( spf_record->num_mech >= SPF_MAX_NUM_MECH )
+		return SPF_response_add_error_ptr(spf_response,
+						SPF_E_BIG_MECH,
+						NULL, *mech_value,
+						"Too many mechanisms.");
 
 	data = SPF_mech_data(spf_mechanism);
 	data_len = 0;
@@ -1009,7 +1014,10 @@ ALIGN_DECL(
 	memset(spf_modifier, 0, sizeof(SPF_mod_t));
 
 	if ( name_len > SPF_MAX_MOD_LEN )
-		return SPF_E_BIG_MOD;
+		return SPF_response_add_error_ptr(spf_response,
+						SPF_E_BIG_MOD,
+						NULL, mod_name,
+						"Modifier name is too long.");
 
 	spf_modifier->name_len = name_len;
 	spf_modifier->data_len = 0;
@@ -1017,8 +1025,11 @@ ALIGN_DECL(
 	/* So that spf_modifier + len == SPF_mod_data(spf_modifier) */
 	len = _align_sz(sizeof( SPF_mod_t ) + name_len);
 
-	if ( spf_record->mod_len + len > SPF_MAX_MOD_LEN )
-		return SPF_E_BIG_MOD;
+	if ( spf_record->num_mod >= SPF_MAX_NUM_MOD )
+		return SPF_response_add_error_ptr(spf_response,
+						SPF_E_BIG_MOD,
+						NULL, mod_name,
+						"Too many modifiers.");
 
 	memcpy(SPF_mod_name(spf_modifier), mod_name, name_len);
 
